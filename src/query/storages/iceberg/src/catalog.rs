@@ -108,6 +108,8 @@ use iceberg_catalog_hms::HmsCatalogConfig;
 use iceberg_catalog_hms::HmsThriftTransport;
 use iceberg_catalog_rest::RestCatalog;
 use iceberg_catalog_rest::RestCatalogConfig;
+use iceberg_catalog_glue::GlueCatalog;
+use iceberg_catalog_glue::GlueCatalogConfig;
 
 use crate::database::IcebergDatabase;
 use crate::IcebergTable;
@@ -194,6 +196,20 @@ impl IcebergCatalog {
                     )
                     .build();
                 let ctl = RestCatalog::new(cfg);
+                Arc::new(ctl)
+            }
+            IcebergCatalogOption::Glue(glue) => {
+                let cfg = GlueCatalogConfig::builder()
+                    .warehouse(glue.warehouse.clone())
+                    .props(
+                        glue.props
+                            .clone()
+                            .into_iter()
+                            .map(|(k, v)| (k.trim_matches('"').to_string(), v))
+                            .collect(),
+                    )
+                    .build();
+                let ctl = GlueCatalog::new(cfg);
                 Arc::new(ctl)
             }
         };
