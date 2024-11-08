@@ -110,6 +110,7 @@ use iceberg_catalog_rest::RestCatalog;
 use iceberg_catalog_rest::RestCatalogConfig;
 use iceberg_catalog_glue::GlueCatalog;
 use iceberg_catalog_glue::GlueCatalogConfig;
+use tokio::runtime::Runtime;
 
 use crate::database::IcebergDatabase;
 use crate::IcebergTable;
@@ -209,7 +210,11 @@ impl IcebergCatalog {
                             .collect(),
                     )
                     .build();
-                let ctl = GlueCatalog::new(cfg);
+
+                let runtime = Runtime::new().unwrap();
+                let ctl = runtime.block_on(GlueCatalog::new(cfg)).map_err(|err| {
+                    ErrorCode::BadArguments(format!("Iceberg build glue catalog failed: {err:?}"))
+                })?;
                 Arc::new(ctl)
             }
         };
