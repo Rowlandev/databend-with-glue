@@ -211,8 +211,7 @@ impl IcebergCatalog {
                     )
                     .build();
 
-                let runtime = Runtime::new().unwrap();
-                let ctl = runtime.block_on(GlueCatalog::new(cfg)).map_err(|err| {
+                let ctl = tokio::task::block_in_place(|| { tokio::runtime::Handle::current().block_on(GlueCatalog::new(cfg))}).map_err(|err| {
                     ErrorCode::BadArguments(format!("Iceberg build glue catalog failed: {err:?}"))
                 })?;
                 Arc::new(ctl)
